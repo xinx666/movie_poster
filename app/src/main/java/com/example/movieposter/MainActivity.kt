@@ -1,8 +1,7 @@
 package com.example.movieposter
 
-import Cinema
+import com.example.movieposter.data.Cinema
 import CinemaDetailsScreen
-import CinemaParser
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,6 +21,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.movieposter.data.CinemaParser
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
