@@ -1,71 +1,67 @@
 package com.example.movieposter
 
-import android.annotation.SuppressLint
+import Cinema
+import CinemaDetailsScreen
+import CinemaParser
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.movieposter.data.Cinema
-import com.example.movieposter.data.CinemaParser
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 
 class MainActivity : ComponentActivity() {
-
-    @SuppressLint("CoroutineCreationDuringComposition")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
-            val cinemas = remember { mutableStateOf<List<Cinema>>(emptyList()) }
-            val isLoading = remember { mutableStateOf(true) }
-
-            // Запускаем асинхронную задачу для парсинга
-            GlobalScope.launch(Dispatchers.IO) {
-                try {
-                    // Используем CinemaParser для получения данных
-                    val parser = CinemaParser()
-                    val cinemaList = parser.parseCinemas()
-
-                    // Обновляем UI с результатами
-                    cinemas.value = cinemaList
-                    isLoading.value = false
-                } catch (e: Exception) {
-                    Log.e("com.example.movieposter.MainActivity", "Error while parsing", e)
-                    isLoading.value = false
+            val navController = rememberNavController()
+            NavHost(navController = navController, startDestination = "list") {
+                composable("list") {
+                    CinemaListScreen(navController)
+                }
+                composable("cinema_details/{scheduleUrl}") { backStackEntry ->
+                    val encodedUrl = backStackEntry.arguments?.getString("scheduleUrl")
+                    val scheduleUrl = encodedUrl?.let { java.net.URLDecoder.decode(it, "UTF-8") }
+                    scheduleUrl?.let {
+                        CinemaDetailsScreen(it)
+                    } ?: Text("Error: Invalid URL")
                 }
             }
-
-            CinemaScreen(cinemas.value, isLoading.value)
         }
     }
 }
 
 @Composable
-fun CinemaScreen(cinemas: List<Cinema>, isLoading: Boolean) {
-    Column(modifier = Modifier) {
-        if (isLoading) {
-            CircularProgressIndicator()
-        } else {
-            if (cinemas.isEmpty()) {
-                Text(text = "Нет данных о кинотеатрах.")
-            } else {
-                cinemas.forEach { cinema ->
-                    Text(text = "Название: ${cinema.name}")
-                    Text(text = "Станция метро: ${cinema.metroStation}")
-                    Text(text = "Ссылка на расписание: ${cinema.scheduleUrl}")
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
+fun CinemaListScreen(navController: NavController) {
+    var cinemas by remember { mutableStateOf<List<Cinema>>(emptyList()) }
+
+    // Загрузка данных кинотеатров
+    LaunchedEffect(Unit) {
+        cinemas = CinemaParser().parseCinemas() // Вызываем функцию для получения списка кинотеатров
+    }
+
+    // Отображаем список кинотеатров
+    Column(modifier = Modifier.padding(16.dp)) {
+        cinemas.forEach { cinema ->
+            Button(onClick = {
+                val encodedUrl = java.net.URLEncoder.encode(cinema.scheduleUrl, "UTF-8")
+                navController.navigate("cinema_details/$encodedUrl")
+            }) {
+                Text(text = cinema.name)
             }
         }
     }

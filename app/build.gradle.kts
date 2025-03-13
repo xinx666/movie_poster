@@ -40,6 +40,8 @@ android {
 }
 
 dependencies {
+    implementation("androidx.navigation:navigation-compose:2.8.8")
+    implementation("com.squareup.okhttp3:okhttp:4.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     implementation("org.jsoup:jsoup:1.13.1")
     implementation(libs.androidx.core.ktx)
